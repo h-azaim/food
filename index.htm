@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مرحبا بك في خدمة فطّرني ع السريع</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .item {
+            margin-bottom: 10px;
+            text-align: right;
+        }
+        .item label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .item input, .item select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .item button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .item button:hover {
+            background-color: #218838;
+        }
+        .invoice {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: right;
+        }
+        .invoice h2 {
+            text-align: center;
+        }
+        .separator {
+            border-top: 2px solid #000;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        .client-info {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .client-info p {
+            margin: 5px 0;
+            padding-right: 30px; /* لإضافة المسافات الفارغة */
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .invoice, .invoice * {
+                visibility: visible;
+            }
+            .invoice {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+        /* إضافة لون أزرق لجملة الترحيب */
+        .welcome-message {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="welcome-message">مرحبا بك في خدمة فطّرني ع السريع</h1>
+        <div class="item">
+            <label for="name">الاسم:</label>
+            <input type="text" id="name">
+        </div>
+        <div class="item">
+            <label for="address">العنوان:</label>
+            <input type="text" id="address">
+        </div>
+        <div class="item">
+            <label for="phone">رقم التليفون:</label>
+            <input type="text" id="phone">
+        </div>
+        <div class="item">
+            <label for="food">اختر الصنف:</label>
+            <select id="food">
+                <option value="فول عادي" data-price="9">فول عادي - 9 جنيه</option>
+                <option value="فول زيت حار" data-price="9">فول زيت حار - 9 جنيه</option>
+                <option value="فول اسكندراني" data-price="10">فول اسكندراني - 10 جنيه</option>
+                <option value="طعمية" data-price="9">طعمية - 9 جنيه</option>
+                <option value="طعمية محشية" data-price="10">طعمية محشية - 10 جنيه</option>
+                <option value="بطاطس صوابع" data-price="12">بطاطس صوابع - 12 جنيه</option>
+                <option value="بطاطس شيبسي" data-price="12">بطاطس شيبسي - 12 جنيه</option>
+                <option value="بيض مسلوق" data-price="9">بيض مسلوق - 9 جنيه</option>
+                <option value="بيض مقلي" data-price="10">بيض مقلي - 10 جنيه</option>
+                <option value="فول بالبيض" data-price="14">فول بالبيض - 14 جنيه</option>
+            </select>
+        </div>
+        <div class="item">
+            <label for="quantity">الكمية:</label>
+            <input type="number" id="quantity" min="1" value="1">
+        </div>
+        <div class="item">
+            <button onclick="addItem()">إضافة صنف</button>
+        </div>
+        <div class="item">
+            <button onclick="generateInvoice()">إنهاء الطلب</button>
+        </div>
+        <div class="item">
+            <button onclick="printInvoice()">طباعة الفاتورة</button>
+        </div>
+        <div class="invoice" id="invoice" style="display: none;">
+            <h2>فاتورة</h2>
+            <div class="client-info" id="clientInfo"></div>
+            <div class="separator"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الصنف</th>
+                        <th>السعر</th>
+                        <th>الكمية</th>
+                        <th>الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceDetails"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2"><strong>إجمالي الكميات</strong></td>
+                        <td id="totalQuantity"><strong>0</strong></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><strong>السعر الإجمالي</strong></td>
+                        <td id="totalPrice"><strong>0 جنيه</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let orderItems = [];
+
+        function addItem() {
+            const foodSelect = document.getElementById('food');
+            const food = foodSelect.options[foodSelect.selectedIndex].value;
+            const price = foodSelect.options[foodSelect.selectedIndex].getAttribute('data-price');
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            const existingItem = orderItems.find(item => item.food === food);
+
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                orderItems.push({ food, quantity, price });
+            }
+
+            alert(`تم إضافة ${food} بكمية ${quantity}`);
+        }
+
+        function generateInvoice() {
+            const name = document.getElementById('name').value;
+            const address = document.getElementById('address').value;
+            const phone = document.getElementById('phone').value;
+            let total = 0;
+            let totalQuantity = 0;
+            let clientInfo = `
+                <p><strong>الاسم:</strong> ${name}</p>
+                <p><strong>رقم التليفون:</strong> ${phone}</p>
+                <p><strong>العنوان:</strong> ${address}</p>
+            `;
+            document.getElementById('clientInfo').innerHTML = clientInfo;
+
+            let invoiceDetails = '';
+
+            orderItems.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                totalQuantity += item.quantity;
+                invoiceDetails += `
+                    <tr>
+                        <td>${item.food}</td>
+                        <td>${item.price} جنيه</td>
+                        <td>${item.quantity}</td>
+                        <td>${itemTotal} جنيه</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('invoiceDetails').innerHTML = invoiceDetails;
+            document.getElementById('totalPrice').innerHTML = `<strong>${total} جنيه</strong>`;
+            document.getElementById('totalQuantity').innerHTML = `<strong>${totalQuantity}</strong>`;
+            document.getElementById('invoice').style.display = 'block';
+        }
+
+        function printInvoice() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
